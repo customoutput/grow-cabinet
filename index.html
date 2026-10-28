@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aquaponic Grow Cabinet</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="A live, growing grow cabinet: planted aquarium feeding hydroponic shelves of monstera, philodendron, alocasia and anthurium.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  /* Layout: full-bleed 3D scene; a thin clock bar on top, a growth log docked right,
+     and one control rail at the bottom. Single dark look: the room is the theme. */
+  :root {
+    --room: #0c0d0d;
+    --glass: rgba(14, 17, 15, 0.74);
+    --line: rgba(214, 232, 220, 0.13);
+    --text: #e6ebe5;
+    --muted: #97a39a;
+    --led: #b8e07a;
+    --amber: #e8b45c;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    color-scheme: dark;
+  }
+  [hidden] { display: none !important; }
+  html, body { height: 100%; margin: 0; }
+  body { background: var(--room); color: var(--text); font-family: var(--display); overflow: hidden; }
+  #c { position: fixed; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; outline: none; }
+
+  .hud { position: fixed; left: 0; right: 0; z-index: 2; display: flex; gap: 12px; align-items: center; pointer-events: none;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+  .hud > * { pointer-events: auto; }
+  .top { top: 0; padding-block: calc(14px + env(safe-area-inset-top, 0px)) 0; justify-content: space-between; align-items: flex-start; }
+  .brand { display: flex; flex-direction: column; gap: 2px; }
+  .brand b { font-weight: 650; font-size: 1.05rem; letter-spacing: -0.01em; text-wrap: balance; }
+  .brand small { font: 400 0.72rem/1.3 var(--mono); color: var(--muted); letter-spacing: 0.04em; text-transform: uppercase; }
+  .clock { display: flex; align-items: baseline; gap: 10px; font: 500 0.8rem/1 var(--mono); font-variant-numeric: tabular-nums;
+    background: var(--glass); border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .clock span { white-space: nowrap; }
+  .clock #simDay { color: var(--led); }
+  .clock .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--led); align-self: center; box-shadow: 0 0 8px var(--led); }
+
+  #log { display: none; position: fixed; z-index: 2; right: max(16px, env(safe-area-inset-right, 0px)); top: calc(64px + env(safe-area-inset-top, 0px));
+    width: 300px; max-height: calc(100% - 200px); overflow: auto; background: var(--glass); border: 1px solid var(--line); border-radius: 14px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); padding: 14px 14px 10px; }
+  #log h2 { margin: 0 0 2px; font-size: 0.95rem; font-weight: 650; }
+  #log .sub { margin: 0 0 10px; font: 400 0.7rem/1.4 var(--mono); color: var(--muted); }
+  #plants { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+  #plants li { padding: 9px 8px; border-radius: 9px; cursor: pointer; display: grid; gap: 6px; }
+  #plants li:hover, #plants li:focus-visible { background: rgba(220, 240, 225, 0.06); outline: none; }
+  .row-top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+  .pname { font-size: 0.84rem; font-weight: 500; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill { font: 500 0.64rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 6px; border-radius: 5px; white-space: nowrap;
+    background: rgba(184, 224, 122, 0.14); color: var(--led); }
+  .pill[data-stage="mature"] { background: rgba(214, 232, 220, 0.08); color: var(--muted); }
+  .pill[data-stage="emerging"], .pill[data-stage="unfurling"] { background: rgba(232, 180, 92, 0.16); color: var(--amber); }
+  .bar { height: 3px; background: rgba(214, 232, 220, 0.1); border-radius: 2px; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--led); border-radius: 2px; transition: width 0.4s; }
+  .meta { display: flex; justify-content: space-between; gap: 8px; font: 400 0.68rem/1.2 var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .env { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; gap: 6px 10px; font: 400 0.7rem/1.35 var(--mono); color: var(--muted); }
+  .env b { display: block; color: var(--text); font-weight: 500; }
+
+  .bottom { bottom: 0; padding-block: 0 calc(14px + env(safe-area-inset-bottom, 0px)); flex-wrap: wrap; justify-content: center; }
+  .group { display: flex; align-items: center; gap: 2px; padding: 3px; background: var(--glass); border: 1px solid var(--line); border-radius: 11px;
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .group .lab { font: 500 0.62rem/1 var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); padding: 0 6px 0 7px; }
+  button { font: 500 0.78rem/1 var(--display); color: var(--text); background: transparent; border: 0; border-radius: 8px; padding: 8px 10px; cursor: pointer; white-space: nowrap; }
+  button:hover { background: rgba(220, 240, 225, 0.07); }
+  button:focus-visible { outline: 2px solid var(--led); outline-offset: 1px; }
+  button[aria-pressed="true"] { background: rgba(184, 224, 122, 0.16); color: var(--led); }
+  #today { color: var(--amber); }
+  #log.open { display: block; }
+
+  #loading { position: fixed; inset: 0; z-index: 5; display: grid; place-items: center; background: var(--room); font: 400 0.8rem/1.4 var(--mono); color: var(--muted); letter-spacing: 0.06em; }
+
+  @media (max-width: 760px) {
+    #log { left: max(16px, env(safe-area-inset-left, 0px)); width: auto; top: calc(62px + env(safe-area-inset-top, 0px)); max-height: 55%; }
+    .clock { font-size: 0.72rem; padding: 7px 10px; gap: 8px; }
+    .clock #simTime { display: none; }
+    .brand small { display: none; }
+    .bottom { gap: 6px; }
+    .group .lab { display: none; }
+    button { padding: 7px 8px; font-size: 0.74rem; }
+  }
+</style>
+
+</head>
+<body>
+<canvas id="c" aria-label="3D view of a glass grow cabinet with a planted aquarium and hydroponic plant shelves" tabindex="0"></canvas>
+
+<header class="hud top">
+  <div class="brand">
+    <b>Aquaponic Grow Cabinet</b>
+    <small>Tank-fed hydro · 4 tiers · 14 aroids</small>
+  </div>
+  <div class="clock" role="status">
+    <span class="dot" aria-hidden="true"></span>
+    <span id="simDay">Day 72</span><span id="simDate">—</span><span id="simTime"></span>
+    <button id="logToggle" aria-controls="log" aria-expanded="false" style="padding:2px 6px">Growth log</button>
+  </div>
+</header>
+
+<aside id="log" aria-label="Growth log">
+  <h2>Growth log</h2>
+  <p class="sub">Newest leaf on each plant. Tap a plant to view its shelf.</p>
+  <ul id="plants"></ul>
+  <div class="env">
+    <div>Photoperiod<b>08:00–20:00</b></div>
+    <div>Status<b id="lightState">Lights on</b></div>
+    <div>Humidity<b id="rh">70% RH</b></div>
+    <div>Tank<b id="shrimpCount">24 cherry shrimp</b></div>
+    <div>Water<b>24.0 °C · pH 6.8</b></div>
+    <div>Hydro loop<b>Pump to top tray</b></div>
+  </div>
+</aside>
+
+<nav class="hud bottom" aria-label="Cabinet controls">
+  <div class="group" role="group" aria-label="View">
+    <span class="lab">View</span>
+    <button data-view="cabinet">Cabinet</button>
+    <button data-view="shelf3">Anthurium</button>
+    <button data-view="shelf2">Alocasia</button>
+    <button data-view="shelf1">Monstera</button>
+    <button data-view="aquarium">Aquarium</button>
+  </div>
+  <div class="group" role="group" aria-label="Time">
+    <span class="lab">Time</span>
+    <button data-speed="1">Live</button>
+    <button data-speed="3600">1 hr/s</button>
+    <button data-speed="86400">1 day/s</button>
+    <button data-speed="604800">1 wk/s</button>
+    <button id="today" hidden>Back to now</button>
+  </div>
+  <div class="group" role="group" aria-label="Lights">
+    <span class="lab">Lights</span>
+    <button data-lights="auto">Auto</button>
+    <button data-lights="on">Day</button>
+    <button data-lights="night">Night</button>
+    <button data-lights="off">Off</button>
+  </div>
+  <div class="group" role="group" aria-label="Cabinet">
+    <button id="fans" aria-pressed="true">Fans on</button>
+    <button id="mist" aria-pressed="true">Mist on</button>
+    <button id="doors" aria-pressed="false">Open doors</button>
+  </div>
+</nav>
+
+<div id="loading">Potting up the cabinet…</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script src="js/core.js"></script>
+<script src="js/textures.js"></script>
+<script src="js/cabinet.js"></script>
+<script src="js/aquarium.js"></script>
+<script src="js/leaves.js"></script>
+<script src="js/plants.js"></script>
+<script src="js/mist.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
