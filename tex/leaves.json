@@ -1,0 +1,44 @@
+[
+ {
+  "name": "bvp_a",
+  "variety": "blackVelvetPink",
+  "jv": 0.365234375,
+  "tv": 0.9609375,
+  "xmin": 0.1904296875,
+  "xmax": 0.6669921875,
+  "ymin": 0.087890625,
+  "ymax": 0.953125
+ },
+ {
+  "name": "bvp_c",
+  "variety": "blackVelvetPink",
+  "jv": 0.365234375,
+  "tv": 0.9609375,
+  "xmin": 0.302734375,
+  "xmax": 0.6806640625,
+  "ymin": 0.16796875,
+  "ymax": 0.9501953125
+ },
+ {
+  "name": "ds_h",
+  "variety": "dragonScale",
+  "jv": 0.365234375,
+  "tv": 0.9609375,
+  "xmin": 0.25,
+  "xmax": 0.7529296875,
+  "ymin": 0.142578125,
+  "ymax": 0.947265625
+ },
+ {
+  "name": "ds_hc",
+  "variety": "dragonScale",
+  "jv": 0.365234375,
+  "tv": 0.9609375,
+  "xmin": 0.25,
+  "xmax": 0.7529296875,
+  "ymin": 0.142578125,
+  "ymax": 0.947265625,
+  "alphaOf": "ds_h",
+  "normalOf": "ds_h"
+ }
+]
